@@ -1,0 +1,75 @@
+SET SUMMARY=EXPLICIT allows to do each field separately.
+SET SUMMARY=EXPLICIT
+
+ENGINE SQLPSTGR SET DEFAULT_CONNECTION CON01
+SQL SQLPSTGR PREPARE SQLOUT FOR
+ SELECT
+ 	"MSISDN",
+ 	COUNT("MSISDN") as "NBR_HEURES",
+	COUNT(1) FILTER (where "ETAT_FIXE" like 'RUPTURE') AS "NBR_RUP"
+ FROM PUBLIC.suivi_stock_novembre_20221106
+ GROUP BY "MSISDN";
+END
+
+-* DEFINE FILE SQLOUT
+-*     RUP_CONST/D1=IF NBR_HEURES / NBR_RUP EQ 1 THEN 1 ELSE 0;
+-* END
+
+TABLE FILE SQLOUT
+PRINT NBR_RUP AND
+COMPUTE RUP_CONST/D1=IF NBR_HEURES / NBR_RUP EQ 1 THEN 1 ELSE 0;
+-* SUM RUP_CONST.ROW-TOTAL
+-* PRINT MSISDN/D10 AND RUP_CONST
+BY MSISDN NOPRINT
+-* WHERE ZONE IS 'INTERIEUR'
+-* PRINT PDV_RUP
+
+ON TABLE HOLD AS MYREPORT FORMAT ALPHA
+END
+
+TABLE FILE MYREPORT
+SUM RUP_CONST/I20
+
+-* ON TABLE SET PAGE OFF
+-* ON TABLE SET PAGE NOLEAD
+ON TABLE SET PAGE-NUM OFF
+ON TABLE SET TITLES OFF
+ON TABLE SET STYLE *
+TYPE=REPORT, GRID=OFF, $
+TYPE=HEADING, FONT=ARIAL, SIZE=12, STYLE=BOLD, $
+-* TYPE=TITLE, STYLE=ITALIC, SIZE=1, $
+TYPE=DATA, COLUMN=N1, STYLE=BOLD, COLOR=BLUE, $
+TYPE=FOOTING, COLOR=ORANGE, STYLE=BOLD, $
+ENDSTYLE
+
+FOOTING CENTER
+"RUPTURE CONSTANTE"
+END
+
+
+-*----------------------------------------
+-* Include common FEX file for HTML output
+-*----------------------------------------
+-*-INCLUDE frozen.fex
+-*----------------FROZEN.FEX------------------
+-* Present the report output in a HTML page.
+-* style sheet freezes titles of the report.
+-*------------------------------------------
+
+-* -HTMLFORM BEGIN
+-* <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
+-* <HTML>
+-* <HEAD>
+
+-* </HEAD>
+-* <BODY>
+-* <br>
+-* <br>
+-* <div CLASS="contstyle">
+-* <p>My Reports</p>
+-* !IBI.FIL.MYREPORT;
+-* </div>
+-* </BODY>
+-* </HTML>
+-* -HTMLFORM END
+-* -RUN
