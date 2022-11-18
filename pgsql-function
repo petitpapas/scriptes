@@ -1,0 +1,50 @@
+-- CREATE TYPE stock_rupture AS (h_rupture int, nbr_rupture int);
+CREATE OR REPLACE FUNCTION suivi_stock ()
+RETURNS stock_rupture AS $response$
+declare
+	response stock_rupture;
+-- 	selected_msisdn public.suivi_stock_novembre_20221106%rowtype;
+  	input_msisdn integer = 707291338;
+BEGIN
+
+  SELECT COUNT("MSISDN") as n_heure,
+	  (SELECT COUNT("MSISDN") FROM public.suivi_stock_novembre_20221106 as s2
+	   where s2."ETAT_RUPTURE" like 'RUPTURE' and s2."MSISDN"=input_msisdn) as n_rup
+  into response.h_rupture, response.nbr_rupture
+  FROM public.suivi_stock_novembre_20221106
+  WHERE "MSISDN"=input_msisdn;
+  
+--   if not found then
+--      raise notice'The film % could not be found', 
+-- 	    input_film_id;
+--   end if;
+  
+--   return selected_msisdn;
+--    SELECT count(*) into total FROM COMPANY;
+--    RETURN total;
+
+  RETURN response;
+END;
+$response$ LANGUAGE plpgsql;
+
+SELECT * FROM suivi_stock();
+
+
+-- do $$
+-- declare
+--   selected_msisdn public.suivi_stock_novembre_20221106%rowtype;
+--   input_msisdn integer = 707291338;
+-- begin  
+
+--   SELECT COUNT("MSISDN") as nbr_heures
+--   into selected_msisdn
+--   FROM public.suivi_stock_novembre_20221106
+--   WHERE "MSISDN"=input_msisdn;
+  
+--   if not found then
+--      raise notice'The film % could not be found', 
+-- 	    input_film_id;
+--   end if;
+  
+--   return selected_msisdn;
+-- end $$
