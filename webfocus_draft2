@@ -1,0 +1,87 @@
+SET SUMMARY=EXPLICIT allows to do each field separately.
+SET SUMMARY=EXPLICIT
+
+-* -DEFAULTH &RUP = 0
+
+-* Calcule du nombre de RUPTURE
+ENGINE SQLPSTGR SET DEFAULT_CONNECTION CON01
+SQL SQLPSTGR PREPARE SQLOUT FOR
+ SELECT
+ 	"MSISDN",
+ 	COUNT("MSISDN") as "NBR_HEURES",
+	COUNT(1) FILTER (where "ETAT_FIXE" like 'RUPTURE') AS "NBR_RUP"
+ FROM PUBLIC.suivi_stock_novembre_20221106
+ GROUP BY "MSISDN";
+END
+
+-* Determination de l'etat de RUPTURE
+TABLE FILE SQLOUT
+PRINT NBR_RUP AND
+COMPUTE RUP_CONST/D1=IF NBR_HEURES / NBR_RUP EQ 1 THEN 1 ELSE 0;
+BY MSISDN NOPRINT
+ON TABLE HOLD AS MYREPORT FORMAT ALPHA
+END
+
+
+*-Affichage Total des RUPTURE
+TABLE FILE MYREPORT
+SUM RUP_CONST/I11
+
+-* ON TABLE SET PAGE-NUM OFF
+-* ON TABLE SET TITLES OFF
+-* ON TABLE SET STYLE *
+-* TYPE=REPORT, GRID=OFF, $
+-* TYPE=HEADING, FONT=ARIAL, SIZE=12, STYLE=BOLD, $
+-* TYPE=DATA, COLUMN=N1, STYLE=BOLD, COLOR=BLUE, $
+-* TYPE=FOOTING, COLOR=ORANGE, STYLE=BOLD, $
+-* ENDSTYLE
+
+-* FOOTING CENTER
+-* "RUPTURE CONSTANTE"
+
+ON TABLE HOLD AS MYDATA FORMAT ALPHA
+END
+
+-RUN
+
+-* THIS READS THE DATA IN THE HOLD FILE AND PUTS
+-* IT INTO A VARIABLE WE CREATE
+-* -READ MYDATA, &VAR1  &VAR1
+-READ MYDATA, &varName
+
+
+-* THIS WILL PRINT THE VARIABLE CONTENTS TO THE SCREEN
+-* -TYPE &varName;
+
+-*----------------------------------------
+-* Include common FEX file for HTML output
+-*----------------------------------------
+-*-INCLUDE frozen.fex
+-*----------------FROZEN.FEX------------------
+-* Present the report output in a HTML page.
+-* style sheet freezes titles of the report.
+-* !IBI.FIL.MYREPORT;
+-* -READ MYDATA &varName.A35.
+-* <INPUT TYPE=TEXT NAME=variable     VALUE="!IBI.AMP.varName;">
+-*------------------------------------------
+
+-HTMLFORM BEGIN
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
+<HTML>
+<HEAD>
+
+</HEAD>
+<BODY>
+<br>
+<br>
+<div CLASS="contstyle">
+<p>My Reports</p>
+!IBI.AMP.VAR;
+</div>
+</BODY>
+</HTML>
+-HTMLFORM END
+-RUN
+-QUIT
+-REPTDONE
+-EXIT
